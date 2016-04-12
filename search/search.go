@@ -1,4 +1,4 @@
-package searchapi
+package search
 
 import (
 	"fmt"

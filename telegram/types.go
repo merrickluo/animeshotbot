@@ -1,10 +1,10 @@
-package telegramapi
+package telegram
 
 type User struct {
-	Id         int64
-	First_name string
-	Last_name  string
-	Username   string
+	Id         int64  `json:"id"`
+	First_name string `json:"first_name"`
+	Last_name  string `json:"last_name"`
+	Username   string `json:"username"`
 }
 
 type GroupChat struct {
@@ -73,17 +73,17 @@ type ForceReply struct {
 }
 
 type InlineQuery struct {
-	Id     string
-	From   User
-	Query  string
-	Offset string
+	Id     string `json:"id"`
+	From   User   `json:"from"`
+	Query  string `json:"query"`
+	Offset string `json:"offset"`
 }
 
 type ChosenInlineQuery struct {
-	Result_id         string
-	From              User
-	Inline_message_id string
-	Query             string
+	Result_id         string `json:"result_id"`
+	From              User   `json:"from"`
+	Inline_message_id string `json:"inline_message_id"`
+	Query             string `json:"query"`
 }
 
 type AnswerInlineQuery struct {
@@ -92,15 +92,15 @@ type AnswerInlineQuery struct {
 }
 
 type InlineQueryResultPhoto struct {
-	Type      string `json:"type""`
+	Type      string `json:"type"`
 	Id        string `json:"id"`
 	Photo_url string `json:"photo_url"`
 	Thumb_url string `json:"thumb_url"`
 }
 
 type Update struct {
-	Update_id            int64
-	Message              Message
-	Inline_query         InlineQuery
-	Chosen_inline_result ChosenInlineQuery
+	Update_id            int64             `json:"update_id"`
+	Message              Message           `json:"message"`
+	Inline_query         InlineQuery       `json:"inline_query"`
+	Chosen_inline_result ChosenInlineQuery `json:"chosen_inline_result"`
 }

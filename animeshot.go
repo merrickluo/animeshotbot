@@ -1,25 +1,39 @@
 package main
 
 import (
-	"./searchapi"
-	"./telegramapi"
+	"./search"
+	"./telegram"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
 )
 
-func main() {
-	updatesch := make(chan []telegramapi.Update)
-
-	go telegramapi.StartFetchUpdates(&updatesch)
-
-	for updates := range updatesch {
-		for _, update := range updates {
-			urls := searchapi.SearchImageForKeyword(update.Inline_query.Query)
-			if len(urls) > 0 {
-				var images []telegramapi.InlineQueryResultPhoto
-				for _, url := range urls {
-					images = append(images, telegramapi.InlineQueryResultPhoto{"photo", url, url, url})
-				}
-				telegramapi.AnswerQuery(update.Inline_query.Id, images)
-			}
+func processUpdate(update telegram.Update) {
+	urls := search.SearchImageForKeyword(update.Inline_query.Query)
+	if len(urls) > 0 {
+		var images []telegram.InlineQueryResultPhoto
+		for _, url := range urls {
+			images = append(images, telegram.InlineQueryResultPhoto{"photo", url, url, url})
 		}
+		telegram.AnswerQuery(update.Inline_query.Id, images)
 	}
+}
+
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		return
+	}
+
+	var result telegram.Update
+
+	err = json.Unmarshal(body, &result)
+	go processUpdate(result)
+}
+
+func main() {
+	http.HandleFunc("/"+telegram.TOKEN, webhookHandler)
+	http.ListenAndServe(":8185", nil)
 }
