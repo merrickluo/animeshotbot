@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const TOKEN string = "112817271:AAHuXhmSRb6SnMgpc0q_txZI5X-4ZR6YHho"
+const TOKEN string = ""
 const BASE_URL string = "https://api.telegram.org/bot"
 
 type GetUpdatesResponse struct {

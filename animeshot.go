@@ -9,11 +9,13 @@ import (
 )
 
 func processUpdate(update telegram.Update) {
-	urls := search.SearchImageForKeyword(update.Inline_query.Query)
-	if len(urls) > 0 {
+	photos := search.SearchImageForKeyword(update.Inline_query.Query)
+
+	if len(photos) > 0 {
 		var images []telegram.InlineQueryResultPhoto
-		for _, url := range urls {
-			images = append(images, telegram.InlineQueryResultPhoto{"photo", url, url, url})
+		for _, photo := range photos {
+			result := telegram.InlineQueryResultPhoto{"photo", photo.Photo_url, photo.Photo_url, photo.Thumb_url, photo.Title, photo.Title, photo.Title}
+			images = append(images, result)
 		}
 		telegram.AnswerQuery(update.Inline_query.Id, images)
 	}

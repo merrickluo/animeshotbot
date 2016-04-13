@@ -10,16 +10,17 @@ import (
 
 const BASE_URL = "https://as.bitinn.net"
 
-type PhotUrls struct {
-	Url []string
+type Photo struct {
+	Photo_url string
+	Thumb_url string
+	Title     string
 }
 
-func SearchImageForKeyword(keyword string) []string {
+func SearchImageForKeyword(keyword string) []Photo {
 	keyword = url.QueryEscape(keyword)
 	realUrl := BASE_URL + "/search?q=" + keyword
-	var result []string
+	var result []Photo
 
-	fmt.Println(realUrl)
 	response, err := http.Get(realUrl)
 	if err != nil {
 		return nil
@@ -34,10 +35,10 @@ func SearchImageForKeyword(keyword string) []string {
 		return nil
 	}
 
-	var hasclass func(attrs []html.Attribute) bool
-	hasclass = func(attrs []html.Attribute) bool {
+	var hasclass func(attrs []html.Attribute, class string) bool
+	hasclass = func(attrs []html.Attribute, class string) bool {
 		for _, attr := range attrs {
-			if attr.Key == "class" {
+			if attr.Key == "class" && attr.Val == class {
 				return true
 			}
 		}
@@ -46,19 +47,31 @@ func SearchImageForKeyword(keyword string) []string {
 
 	var travel func(*html.Node)
 	travel = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "a" {
-			if hasclass(n.Attr) {
-				for _, attr := range n.Attr {
-					if attr.Key == "href" {
-						strs := strings.Split(attr.Val, "/")
-						url := "/upload/" + strs[len(strs)-1] + ".1200.jpg"
-						result = append(result, BASE_URL+url)
+		if n.Type == html.ElementNode && n.Data == "div" && hasclass(n.Attr, "main-preview") {
+			photo := Photo{}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if c.Type == html.ElementNode && c.Data == "blockquote" {
+					for d := c.FirstChild; d != nil; d = d.NextSibling {
+						if d.Data == "p" {
+							photo.Title = d.FirstChild.Data
+						} else if d.Data == "cite" {
+							in := d.FirstChild
+							for _, attr := range in.Attr {
+								if attr.Key == "href" {
+									strs := strings.Split(attr.Val, "/")
+									photo.Thumb_url = BASE_URL + "/upload/" + strs[len(strs)-1] + ".300.jpg"
+									photo.Photo_url = BASE_URL + "/upload/" + strs[len(strs)-1] + ".1200.jpg"
+									result = append(result, photo)
+								}
+							}
+						}
 					}
 				}
 			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			travel(c)
+		} else {
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				travel(c)
+			}
 		}
 	}
 

@@ -92,10 +92,13 @@ type AnswerInlineQuery struct {
 }
 
 type InlineQueryResultPhoto struct {
-	Type      string `json:"type"`
-	Id        string `json:"id"`
-	Photo_url string `json:"photo_url"`
-	Thumb_url string `json:"thumb_url"`
+	Type        string `json:"type"`
+	Id          string `json:"id"`
+	Photo_url   string `json:"photo_url"`
+	Thumb_url   string `json:"thumb_url"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Caption     string `json:"caption"`
 }
 
 type Update struct {
