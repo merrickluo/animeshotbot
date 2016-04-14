@@ -8,8 +8,7 @@ import (
 	"time"
 )
 
-const TOKEN string = ""
-const BASE_URL string = "https://api.telegram.org/bot"
+const baseurl string = "https://api.telegram.org/bot"
 
 type GetUpdatesResponse struct {
 	Ok     bool
@@ -33,7 +32,7 @@ func StartFetchUpdates(updateChannel *chan []Update) {
 }
 
 func SendMessage(chatId int64, text string) {
-	url := fmt.Sprintf("%s%s/sendMessage?chat_id=%d&text=%s", BASE_URL, TOKEN, chatId, text)
+	url := fmt.Sprintf("%s%s/sendMessage?chat_id=%d&text=%s", baseurl, Token, chatId, text)
 	fmt.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -49,7 +48,7 @@ func AnswerQuery(queryId string, results []InlineQueryResultPhoto) {
 		fmt.Println(err)
 		return
 	}
-	url := fmt.Sprintf("%s%s/answerInlineQuery?inline_query_id=%s&results=%s", BASE_URL, TOKEN, queryId, json)
+	url := fmt.Sprintf("%s%s/answerInlineQuery?inline_query_id=%s&results=%s", baseurl, Token, queryId, json)
 	fmt.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -59,7 +58,7 @@ func AnswerQuery(queryId string, results []InlineQueryResultPhoto) {
 }
 
 func GetUpdates(offset int64) []Update {
-	url := BASE_URL + TOKEN + "/getUpdates"
+	url := baseurl + Token + "/getUpdates"
 	if offset != 0 {
 		url += fmt.Sprintf("?offset=%d", offset)
 	}

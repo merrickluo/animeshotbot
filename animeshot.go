@@ -6,28 +6,50 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 func processUpdate(update telegram.Update) {
+	var query string = ""
+	var inline bool = false
+	var full bool = false
 	if len(update.Inline_query.Query) > 0 {
-		photos := search.SearchImageForKeyword(update.Inline_query.Query)
-		if len(photos) > 0 {
+		query = update.Inline_query.Query
+		inline = true
+	} else if len(update.Message.Text) > 0 {
+		text := update.Message.Text
+		if strings.HasPrefix(text, "/full ") {
+			query = text[6:]
+			full = true
+		} else {
+			query = text
+		}
+	}
+
+	if len(query) <= 0 {
+		return
+	}
+
+	photos := search.SearchImageForKeyword(query)
+	if len(photos) > 0 {
+		if inline {
 			var images []telegram.InlineQueryResultPhoto
 			for _, photo := range photos {
 				result := telegram.InlineQueryResultPhoto{"photo", photo.Photo_url, photo.Photo_url, photo.Thumb_url, photo.Title, photo.Title, photo.Title}
 				images = append(images, result)
 			}
 			telegram.AnswerQuery(update.Inline_query.Id, images)
-		}
-	} else if len(update.Message.Text) > 0 {
-		photos := search.SearchImageForKeyword(update.Message.Text)
-		if len(photos) > 0 {
-			for _, photo := range photos {
-				telegram.SendMessage(update.Message.Chat.Id, photo.Title+" "+photo.Photo_url)
-			}
 		} else {
-			telegram.SendMessage(update.Message.Chat.Id, "No Search result > <")
+			for _, photo := range photos {
+				text := photo.Title
+				if full {
+					text = text + " " + photo.Photo_url
+				}
+				telegram.SendMessage(update.Message.Chat.Id, text)
+			}
 		}
+	} else if !inline {
+		telegram.SendMessage(update.Message.Chat.Id, "No Search result > <")
 	}
 }
 
@@ -45,7 +67,21 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	go processUpdate(result)
 }
 
+var mode = "Release"
+
 func main() {
-	http.HandleFunc("/"+telegram.TOKEN, webhookHandler)
-	http.ListenAndServe(":8185", nil)
+	if mode == "Release" {
+		http.HandleFunc("/"+telegram.Token, webhookHandler)
+		http.ListenAndServe(":8185", nil)
+	} else {
+		updatesch := make(chan []telegram.Update)
+
+		go telegram.StartFetchUpdates(&updatesch)
+
+		for updates := range updatesch {
+			for _, update := range updates {
+				go processUpdate(update)
+			}
+		}
+	}
 }
