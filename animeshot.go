@@ -4,6 +4,7 @@ import (
 	"./search"
 	"./telegram"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -40,11 +41,15 @@ func processUpdate(update telegram.Update) {
 			}
 			telegram.AnswerQuery(update.Inline_query.Id, images)
 		} else {
+			var text string = ""
 			for _, photo := range photos {
-				text := photo.Title
 				if full {
-					text = text + " " + photo.Photo_url
+					telegram.SendMessage(update.Message.Chat.Id, photo.Title+"%0A"+photo.Photo_url)
+				} else {
+					text = text + photo.Title + "%0A"
 				}
+			}
+			if len(text) >= 0 {
 				telegram.SendMessage(update.Message.Chat.Id, text)
 			}
 		}
@@ -77,6 +82,7 @@ func main() {
 		updatesch := make(chan []telegram.Update)
 
 		go telegram.StartFetchUpdates(&updatesch)
+		fmt.Println("eee")
 
 		for updates := range updatesch {
 			for _, update := range updates {
