@@ -13,15 +13,13 @@ func processInlineQuery(query telegram.InlineQuery) {
 	if len(query.Id) == 0 {
 		return
 	}
+	var images []telegram.InlineQueryResultPhoto
 	photos := search.SearchImageForKeyword(query.Query)
-	if len(photos) > 0 {
-		var images []telegram.InlineQueryResultPhoto
-		for _, photo := range photos {
-			result := telegram.InlineQueryResultPhoto{"photo", photo.Image_large, photo.Image_large, photo.Image_thumbnail, photo.Text, photo.Text, photo.Text}
-			images = append(images, result)
-		}
-		telegram.AnswerQuery(query.Id, images)
+	for _, photo := range photos {
+		result := telegram.InlineQueryResultPhoto{"photo", photo.Image_large, photo.Image_large, photo.Image_thumbnail, photo.Text, photo.Text, photo.Text}
+		images = append(images, result)
 	}
+	telegram.AnswerQuery(query.Id, images)
 }
 
 func processMessage(message telegram.Message) {
