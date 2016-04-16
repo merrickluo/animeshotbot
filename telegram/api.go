@@ -33,12 +33,10 @@ func StartFetchUpdates(updateChannel *chan []Update) {
 
 func SendMessage(chatId int64, text string) {
 	url := fmt.Sprintf("%s%s/sendMessage?chat_id=%d&text=%s", baseurl, Token, chatId, text)
-	fmt.Println(url)
-	resp, err := http.Get(url)
+	_, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(resp)
 }
 
 func AnswerQuery(queryId string, results []InlineQueryResultPhoto) {
@@ -49,12 +47,11 @@ func AnswerQuery(queryId string, results []InlineQueryResultPhoto) {
 		return
 	}
 	url := fmt.Sprintf("%s%s/answerInlineQuery?inline_query_id=%s&results=%s", baseurl, Token, queryId, json)
-	fmt.Println(url)
-	resp, err := http.Get(url)
+	_, err = http.Get(url)
+
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(resp)
 }
 
 func GetUpdates(offset int64) []Update {
@@ -79,8 +76,6 @@ func GetUpdates(offset int64) []Update {
 	var result GetUpdatesResponse
 
 	err = json.Unmarshal(body, &result)
-	var str = fmt.Sprintf("%s", body)
-	println(str)
 	if err != nil {
 		fmt.Println(err)
 		return nil

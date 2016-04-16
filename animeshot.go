@@ -4,58 +4,59 @@ import (
 	"./search"
 	"./telegram"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-func processUpdate(update telegram.Update) {
-	var query string = ""
-	var inline bool = false
-	var full bool = false
-	if len(update.Inline_query.Query) > 0 {
-		query = update.Inline_query.Query
-		inline = true
-	} else if len(update.Message.Text) > 0 {
-		text := update.Message.Text
-		if strings.HasPrefix(text, "/full ") {
-			query = text[6:]
-			full = true
-		} else {
-			query = text
-		}
-	}
-
-	if len(query) <= 0 {
+func processInlineQuery(query telegram.InlineQuery) {
+	if len(query.Id) == 0 {
 		return
+	}
+	photos := search.SearchImageForKeyword(query.Query)
+	if len(photos) > 0 {
+		var images []telegram.InlineQueryResultPhoto
+		for _, photo := range photos {
+			result := telegram.InlineQueryResultPhoto{"photo", photo.Image_large, photo.Image_large, photo.Image_thumbnail, photo.Text, photo.Text, photo.Text}
+			images = append(images, result)
+		}
+		telegram.AnswerQuery(query.Id, images)
+	}
+}
+
+func processMessage(message telegram.Message) {
+	if message.Message_id == 0 {
+		return
+	}
+	query := message.Text
+	full := false
+
+	if strings.HasPrefix(query, "/full ") {
+		query = query[6:]
+		full = true
 	}
 
 	photos := search.SearchImageForKeyword(query)
-	if len(photos) > 0 {
-		if inline {
-			var images []telegram.InlineQueryResultPhoto
-			for _, photo := range photos {
-				result := telegram.InlineQueryResultPhoto{"photo", photo.Photo_url, photo.Photo_url, photo.Thumb_url, photo.Title, photo.Title, photo.Title}
-				images = append(images, result)
-			}
-			telegram.AnswerQuery(update.Inline_query.Id, images)
+
+	var text string = ""
+	for _, photo := range photos {
+		if full {
+			telegram.SendMessage(message.Chat.Id, photo.Text+"%0A"+photo.Image_large)
 		} else {
-			var text string = ""
-			for _, photo := range photos {
-				if full {
-					telegram.SendMessage(update.Message.Chat.Id, photo.Title+"%0A"+photo.Photo_url)
-				} else {
-					text = text + photo.Title + "%0A"
-				}
-			}
-			if len(text) >= 0 {
-				telegram.SendMessage(update.Message.Chat.Id, text)
-			}
+			text = text + photo.Text + "%0A"
 		}
-	} else if !inline {
-		telegram.SendMessage(update.Message.Chat.Id, "No Search result > <")
 	}
+	if len(photos) == 0 {
+		text = "No Result. %0AWant to upload some shot? Go to https://as.bitinn.net"
+	}
+	if len(text) >= 0 {
+		telegram.SendMessage(message.Chat.Id, text)
+	}
+}
+
+func processUpdate(update telegram.Update) {
+	processInlineQuery(update.Inline_query)
+	processMessage(update.Message)
 }
 
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +83,6 @@ func main() {
 		updatesch := make(chan []telegram.Update)
 
 		go telegram.StartFetchUpdates(&updatesch)
-		fmt.Println("eee")
 
 		for updates := range updatesch {
 			for _, update := range updates {
