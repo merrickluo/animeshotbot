@@ -46,7 +46,7 @@ func AnswerQuery(queryId string, results []InlineQueryResultPhoto) {
 		fmt.Println(err)
 		return
 	}
-	url := fmt.Sprintf("%s%s/answerInlineQuery?inline_query_id=%s&results=%s", baseurl, Token, queryId, json)
+	url := fmt.Sprintf("%s%s/answerInlineQuery?inline_query_id=%s&results=%s&cache_time=0", baseurl, Token, queryId, json)
 	_, err = http.Get(url)
 
 	if err != nil {
