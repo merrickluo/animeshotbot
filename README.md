@@ -26,6 +26,7 @@ run:
 Note that you must set ANIMESHOTBOT\_TG\_TOKEN (your bot token) environment variable before run this bot
 
 ## TODO
-- [] full mode show result with offset and limit
-- [] switch mode use command
-- [] inline mode offset
+
+- [ ] full mode show result with offset and limit
+- [ ] switch mode use command
+- [ ] inline mode offset
