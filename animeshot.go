@@ -1,91 +1,85 @@
 package main
 
 import (
-	"./search"
-	"./telegram"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"github.com/merrickluo/animeshotbot/search"
+	telegram "gopkg.in/telegram-bot-api.v4"
 	"strings"
 )
 
-func processInlineQuery(query telegram.InlineQuery) {
-	if len(query.Id) == 0 {
-		return
-	}
-	var images []telegram.InlineQueryResultPhoto
-	photos := search.SearchImageForKeyword(query.Query)
-	for _, photo := range photos {
-		result := telegram.InlineQueryResultPhoto{"photo", photo.Image_large, photo.Image_large, photo.Image_thumbnail, photo.Text, photo.Text, photo.Text}
-		images = append(images, result)
-	}
-	telegram.AnswerQuery(query.Id, images)
+func searchPhotosByText(text string) []search.Photo {
+	return search.SearchImageForKeyword(text)
 }
 
-func processMessage(message telegram.Message) {
-	if message.Message_id == 0 {
+func answerInlineQuery(bot telegram.BotAPI, queryId string, photos []search.Photo) {
+	var images []interface{}
+	for _, photo := range photos {
+		result := telegram.InlineQueryResultPhoto{
+			Type:        "photo",
+			ID:          photo.Sid,
+			URL:         photo.Image_large,
+			ThumbURL:    photo.Image_thumbnail,
+			Title:       photo.Text,
+			Caption:     photo.Text,
+			Description: photo.Text}
+		images = append(images, result)
+	}
+
+	var config = telegram.InlineConfig{
+		InlineQueryID: queryId,
+		Results:       images,
+		CacheTime:     0,
+	}
+
+	bot.AnswerInlineQuery(config)
+}
+
+func answerMessage(bot telegram.BotAPI, chatId int64, photos []search.Photo) {
+	if len(photos) == 0 {
+		msg := telegram.NewMessage(chatId, "No Result. \nWant to upload some shot? Go to https://as.bitinn.net")
+		bot.Send(msg)
 		return
 	}
-	query := message.Text
-	full := false
-
-	if strings.HasPrefix(query, "/full ") {
-		query = query[6:]
-		full = true
-	}
-
-	photos := search.SearchImageForKeyword(query)
 
 	var text string = ""
 	for _, photo := range photos {
-		if full {
-			telegram.SendMessage(message.Chat.Id, photo.Text+"%0A"+photo.Image_large)
-		} else {
-			text = text + photo.Text + "%0A"
-		}
+		text = text + photo.Text + "\n"
 	}
-	if len(photos) == 0 {
-		text = "No Result. %0AWant to upload some shot? Go to https://as.bitinn.net"
-	}
+
 	if len(text) >= 0 {
-		telegram.SendMessage(message.Chat.Id, text)
+		msg := telegram.NewMessage(chatId, text)
+		bot.Send(msg)
 	}
 }
 
-func processUpdate(update telegram.Update) {
-	processInlineQuery(update.Inline_query)
-	processMessage(update.Message)
-}
-
-func webhookHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-
-	if err != nil {
+func answerMessageFullMode(bot telegram.BotAPI, chatId int64, photos []search.Photo) {
+	if len(photos) == 0 {
+		msg := telegram.NewMessage(chatId, "No Result. \nWant to upload some shot? Go to https://as.bitinn.net")
+		bot.Send(msg)
 		return
 	}
 
-	var result telegram.Update
+	for _, photo := range photos {
+		msg := telegram.NewMessage(chatId, photo.Text+"\n"+photo.Image_large)
+		bot.Send(msg)
+	}
 
-	err = json.Unmarshal(body, &result)
-	go processUpdate(result)
 }
 
-var mode = "Release"
+func processUpdate(bot telegram.BotAPI, update telegram.Update) {
+	if update.InlineQuery != nil {
+		queryText := update.InlineQuery.Query
+		photos := searchPhotosByText(queryText)
+		answerInlineQuery(bot, update.InlineQuery.ID, photos)
+	} else if update.Message != nil {
+		if strings.HasPrefix(update.Message.Text, "/full ") {
+			queryText := update.Message.Text[6:]
+			photos := searchPhotosByText(queryText)
 
-func main() {
-	if mode == "Release" {
-		http.HandleFunc("/"+telegram.Token, webhookHandler)
-		http.ListenAndServe(":8185", nil)
-	} else {
-		updatesch := make(chan []telegram.Update)
-
-		go telegram.StartFetchUpdates(&updatesch)
-
-		for updates := range updatesch {
-			for _, update := range updates {
-				go processUpdate(update)
-			}
+			answerMessageFullMode(bot, update.Message.Chat.ID, photos)
+		} else {
+			queryText := update.Message.Text
+			photos := searchPhotosByText(queryText)
+			answerMessage(bot, update.Message.Chat.ID, photos)
 		}
 	}
 }
