@@ -38,6 +38,7 @@ func answerMessage(bot telegram.BotAPI, chatId int64, photos []search.Photo) {
 		msg := telegram.NewMessage(chatId, "No Result. \nWant to upload some shot? Go to https://as.bitinn.net")
 		bot.Send(msg)
 		return
+
 	}
 
 	var text string = ""

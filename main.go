@@ -49,6 +49,9 @@ func main() {
 	log.Info("Authorized on account " + bot.Self.UserName)
 
 	if *mode == kFetchMode {
+		config := telegram.NewWebhook("")
+		bot.SetWebhook(config)
+
 		u := telegram.NewUpdate(0)
 		u.Timeout = 60
 		updates, err := bot.GetUpdatesChan(u)
@@ -69,11 +72,10 @@ func main() {
 		log.Info("webhook set to " + url)
 
 		updates := bot.ListenForWebhook("/" + bot.Token)
-		log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
+		go http.ListenAndServe(":"+strconv.Itoa(*port), nil)
 
 		for update := range updates {
-			log.Info("message: " + update.Message.Text)
-			log.Info("inline query: " + update.InlineQuery.Query)
+			log.Info(update)
 			go processUpdate(*bot, update)
 		}
 	} else {
