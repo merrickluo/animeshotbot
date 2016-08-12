@@ -19,8 +19,8 @@ var (
 	debug = kingpin.Flag("debug", "enable debug mode").Short('d').Bool()
 )
 
-const kFetchMode = "fetch"
-const kWebhookMode = "webhook"
+const fetchMode = "fetch"
+const webhookMode = "webhook"
 
 func main() {
 	var token = os.Getenv("ANIMESHOTBOT_TG_TOKEN")
@@ -48,7 +48,7 @@ func main() {
 	bot.Debug = *debug
 	log.Info("Authorized on account " + bot.Self.UserName)
 
-	if *mode == kFetchMode {
+	if *mode == fetchMode {
 		config := telegram.NewWebhook("")
 		bot.SetWebhook(config)
 
@@ -62,7 +62,7 @@ func main() {
 		for update := range updates {
 			go processUpdate(*bot, update)
 		}
-	} else if *mode == kWebhookMode {
+	} else if *mode == webhookMode {
 		url := "https://merrick.luois.ninja/" + bot.Token
 		config := telegram.NewWebhook(url)
 		_, err := bot.SetWebhook(config)
