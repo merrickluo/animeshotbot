@@ -18,7 +18,7 @@ run:
 
     Flags:
           --help          Show context-sensitive help (also try --help-long and --help-man).
-      -m, --mode="fetch"  start bot with fetch methods
+      -m, --mode="fetch"  start bot in "fetch" mode or "webhook" mode
       -p, --port=8185     listen port, use only with webhook mode
       -d, --debug         enable debug mode
           --version       Show application version.

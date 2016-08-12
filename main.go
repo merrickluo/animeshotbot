@@ -11,12 +11,17 @@ import (
 
 var (
 	log    = logging.MustGetLogger("animeshotbot")
-	format = logging.MustStringFormatter(
-		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
-	)
-	mode  = kingpin.Flag("mode", "start bot with fetch methods").Short('m').Default("fetch").String()
-	port  = kingpin.Flag("port", "listen port, use only with webhook mode").Short('p').Default("8185").Int()
-	debug = kingpin.Flag("debug", "enable debug mode").Short('d').Bool()
+	format = logging.MustStringFormatter("%{color}%{time:15:04:05.000}" +
+		"%{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}")
+	mode = kingpin.
+		Flag("mode", "start bot in \"fetch\" mode or \"webhook\" mode").
+		Short('m').Default("fetch").String()
+	port = kingpin.
+		Flag("port", "listen port, use only with webhook mode").
+		Short('p').Default("8185").Int()
+	debug = kingpin.
+		Flag("debug", "enable debug mode").
+		Short('d').Bool()
 )
 
 const fetchMode = "fetch"
@@ -25,7 +30,8 @@ const webhookMode = "webhook"
 func main() {
 	var token = os.Getenv("ANIMESHOTBOT_TG_TOKEN")
 	if len(token) == 0 {
-		log.Fatal("Telegram bot token not set, please set environment variable ANIMESHOTBOT_TG_TOKEN")
+		log.Fatal("Telegram bot token not set, " +
+			"please set environment variable ANIMESHOTBOT_TG_TOKEN")
 	}
 
 	kingpin.Version("0.0.1")
