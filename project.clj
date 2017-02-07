@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/data.json "0.2.6"]
                  [morse "0.2.3-SNAPSHOT"]]
+  :plugins [[lein-sub "0.3.0"]]
   :sub ["modules/morse"]
   :main ^:skip-aot animeshotbot.core
   :target-path "target/%s"
