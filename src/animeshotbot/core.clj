@@ -7,7 +7,7 @@
 (require '[clojure.data.json :as json])
 (require '[clj-http.client :as client])
 
-(def token (System/getenv ))
+(def token (System/getenv "ANIMESHOTBOT_TG_TOKEN"))
 
 (defn search-shots
   [shot-keyword]
@@ -32,7 +32,16 @@
                   (api/answer-inline token (:id query)
                                      (build-inline-results shots)))))
 
+(defn run-bot []
+  (let [channel (p/start token bot-api)]
+    (println "start polling updates...")
+    (clojure.core.async/<!! channel)))
+
 (defn -main
-  "I don't do a whole lot ... yet."
   [& args]
-  (p/start token bot-api))
+  (if (clojure.string/blank? token)
+    (do (println "Telegram bot token not set please set environment variable ANIMESHOTBOT_TG_TOKEN")
+        (System/exit 1))
+    (run-bot)))
+
+;;(p/start token bot-api) //for local test
