@@ -1,0 +1,3 @@
+[submodule "modules/morse"]
+	path = modules/morse
+	url = https://github.com/Otann/morse
