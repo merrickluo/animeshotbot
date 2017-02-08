@@ -10,10 +10,12 @@
 (def token (System/getenv "ANIMESHOTBOT_TG_TOKEN"))
 
 (defn search-shots
-  [shot-keyword]
+  [shot-keyword shot-offset]
   (try 
     (let [respBody ((client/get (str "https://as.bitinn.net/api/shots?q="
-                                     (java.net.URLEncoder/encode shot-keyword))
+                                     (java.net.URLEncoder/encode shot-keyword)
+                                     "&page="
+                                     (inc shot-offset))
                                 {:insecure? true}) :body)]
       (json/read-str respBody :key-fn keyword))
     (catch Exception e (prn e))))
@@ -29,16 +31,20 @@
                                 shots))))
 
 (defhandler bot-api
-  (message msg (let* [shots (search-shots (:text msg))
+  (message msg (let* [shots (search-shots (:text msg) 0)
                       text (if (empty? shots)
                              "No Results"
                              (clojure.string/join "\n" (map :text shots)))]
                  (prn shots)
 ;;                 (println msg)
                  (api/send-text token (get-in msg [:chat :id]) text)))
-  (inline query (let [shots (search-shots (:query query))]
+
+  (inline query (let* [offset (if (clojure.string/blank? (:offset query)) 0 (read-string (:offset query)))
+                       shots (search-shots (:query query) offset)]
                   (println query)
+                  (println offset)
                   (try (api/answer-inline token (:id query)
+                                          {:next_offset (inc offset)}
                                           (build-inline-results shots))
                        (catch Exception e (prn e))))))
 
