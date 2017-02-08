@@ -23,11 +23,18 @@
 (defn build-inline-results
   [shots]
   (json/write-str (into [] (map (fn [shot]
-                                  {:type "article"
+                                  {:type "photo"
                                    :id (shot :sid)
-                                   :title (shot :text)
-                                   :input_message_content {:message_text (str  (shot :text) "\n" (shot :image_large))}
-                                   :thumb_url (shot :image_thumbnail)})
+                                   :photo_url (shot :image_large)
+                                   :thumb_url (shot :image_thumbnail)
+                                   :caption (shot :text)
+                                   :photo_width 1200
+                                   :photo_height 800 })
+                                ;; {:type "article"
+                                ;;  :id (shot :sid)
+                                ;;  :title (shot :text)
+                                ;;  :input_message_content {:message_text (str  (shot :text) "\n" (shot :image_large))}
+                                ;;  :thumb_url (shot :image_thumbnail)}
                                 shots))))
 
 (defhandler bot-api
@@ -35,14 +42,14 @@
                       text (if (empty? shots)
                              "No Results"
                              (clojure.string/join "\n" (map :text shots)))]
-                 (prn shots)
+;;                 (prn shots)
 ;;                 (println msg)
                  (api/send-text token (get-in msg [:chat :id]) text)))
 
   (inline query (let* [offset (if (clojure.string/blank? (:offset query)) 0 (read-string (:offset query)))
                        shots (search-shots (:query query) offset)]
-                  (println query)
-                  (println offset)
+;;                  (println query)
+;;                  (println offset)
                   (try (api/answer-inline token (:id query)
                                           (if (not (empty? shots))
                                             {:next_offset (inc offset)})
