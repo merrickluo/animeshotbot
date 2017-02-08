@@ -26,7 +26,7 @@
                                   {:type "article"
                                    :id (shot :sid)
                                    :title (shot :text)
-                                   :input_message_content {:message_text (str  (shot :text) (shot :image_large))}
+                                   :input_message_content {:message_text (str  (shot :text) "\n" (shot :image_large))}
                                    :thumb_url (shot :image_thumbnail)})
                                 shots))))
 
