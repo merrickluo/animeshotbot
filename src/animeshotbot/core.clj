@@ -20,12 +20,13 @@
 
 (defn build-inline-results
   [shots]
-  (json/write-str (reduce conj [] (map (fn [shot] {:type "photo"
-                                                   :id (shot :sid)
-                                                   :photo_url (shot :image_large)
-                                                   :thumb_url (shot :image_thumbnail)
-                                                   :caption (shot :text)})
-                                       shots))))
+  (json/write-str (into [] (map (fn [shot]
+                                  {:type "article"
+                                   :id (shot :sid)
+                                   :title (shot :text)
+                                   :input_message_content {:message_text (str  (shot :text) (shot :image_large))}
+                                   :thumb_url (shot :image_thumbnail)})
+                                shots))))
 
 (defhandler bot-api
   (message msg (let* [shots (search-shots (:text msg))
@@ -36,8 +37,10 @@
 ;;                 (println msg)
                  (api/send-text token (get-in msg [:chat :id]) text)))
   (inline query (let [shots (search-shots (:query query))]
-                  (api/answer-inline token (:id query)
-                                     (build-inline-results shots)))))
+                  (println query)
+                  (try (api/answer-inline token (:id query)
+                                          (build-inline-results shots))
+                       (catch Exception e (prn e))))))
 
 (defn run-bot []
   (let [channel (p/start token bot-api)]
