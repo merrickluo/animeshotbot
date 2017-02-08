@@ -44,7 +44,8 @@
                   (println query)
                   (println offset)
                   (try (api/answer-inline token (:id query)
-                                          {:next_offset (inc offset)}
+                                          (if (not (empty? shots))
+                                            {:next_offset (inc offset)})
                                           (build-inline-results shots))
                        (catch Exception e (prn e))))))
 
