@@ -11,9 +11,12 @@
 
 (defn search-shots
   [shot-keyword]
-  (let [respBody ((client/get (str "https://as.bitinn.net/api/shots?q=" shot-keyword)
-                              {:insecure? true}) :body)]
-    (json/read-str respBody :key-fn keyword)))
+  (try 
+    (let [respBody ((client/get (str "https://as.bitinn.net/api/shots?q="
+                                     (java.net.URLEncoder/encode shot-keyword))
+                                {:insecure? true}) :body)]
+      (json/read-str respBody :key-fn keyword))
+    (catch Exception e (prn e))))
 
 (defn build-inline-results
   [shots]
@@ -25,9 +28,13 @@
                                        shots))))
 
 (defhandler bot-api
-  (message msg (let [shots (search-shots (:text msg))]
-                 (api/send-text token (get-in msg [:chat :id])
-                                (clojure.string/join "\n" (map :text shots)))))
+  (message msg (let* [shots (search-shots (:text msg))
+                      text (if (empty? shots)
+                             "No Results"
+                             (clojure.string/join "\n" (map :text shots)))]
+                 (prn shots)
+;;                 (println msg)
+                 (api/send-text token (get-in msg [:chat :id]) text)))
   (inline query (let [shots (search-shots (:query query))]
                   (api/answer-inline token (:id query)
                                      (build-inline-results shots)))))
