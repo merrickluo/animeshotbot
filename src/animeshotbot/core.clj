@@ -11,7 +11,7 @@
 
 (defn search-shots
   [shot-keyword shot-offset]
-  (try 
+  (try
     (let [respBody ((client/get (str "https://as.bitinn.net/api/shots?q="
                                      (java.net.URLEncoder/encode shot-keyword)
                                      "&page="
@@ -47,7 +47,8 @@
                  (api/send-text token (get-in msg [:chat :id]) text)))
 
   (inline query (let* [offset (if (clojure.string/blank? (:offset query)) 0 (read-string (:offset query)))
-                       shots (search-shots (:query query) offset)]
+                       text (:query query)
+                       shots (if (nil? text) [] (search-shots text offset))]
 ;;                  (println query)
 ;;                  (println offset)
                   (try (api/answer-inline token (:id query)
@@ -68,4 +69,5 @@
         (System/exit 1))
     (run-bot)))
 
-;;(p/start token bot-api) //for local test
+;;for local test
+;;(p/start token bot-api)
