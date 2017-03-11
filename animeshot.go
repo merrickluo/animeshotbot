@@ -1,16 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/merrickluo/animeshotbot/search"
 	telegram "gopkg.in/telegram-bot-api.v4"
+	"strconv"
 	"strings"
 )
 
-func searchPhotosByText(text string) []search.Photo {
-	return search.SearchImageForKeyword(text)
+func searchPhotosByText(text string, offset int) []search.Photo {
+	return search.ImageForKeyword(text, offset)
 }
 
-func answerInlineQuery(bot telegram.BotAPI, queryId string, photos []search.Photo) {
+func answerInlineQuery(bot telegram.BotAPI, queryId string, photos []search.Photo, offset int) {
 	var images []interface{}
 	for _, photo := range photos {
 		result := telegram.InlineQueryResultPhoto{
@@ -28,6 +30,7 @@ func answerInlineQuery(bot telegram.BotAPI, queryId string, photos []search.Phot
 		InlineQueryID: queryId,
 		Results:       images,
 		CacheTime:     0,
+		NextOffset:    fmt.Sprintf("%d", offset+1),
 	}
 
 	bot.AnswerInlineQuery(config)
@@ -69,17 +72,21 @@ func answerMessageFullMode(bot telegram.BotAPI, chatId int64, photos []search.Ph
 func processUpdate(bot telegram.BotAPI, update telegram.Update) {
 	if update.InlineQuery != nil {
 		queryText := update.InlineQuery.Query
-		photos := searchPhotosByText(queryText)
-		answerInlineQuery(bot, update.InlineQuery.ID, photos)
+		offset, err := strconv.ParseInt(update.InlineQuery.Offset, 10, 0)
+		if err != nil {
+			offset = 1
+		}
+		photos := searchPhotosByText(queryText, int(offset))
+		answerInlineQuery(bot, update.InlineQuery.ID, photos, int(offset))
 	} else if update.Message != nil {
 		if strings.HasPrefix(update.Message.Text, "/full ") {
 			queryText := update.Message.Text[6:]
-			photos := searchPhotosByText(queryText)
+			photos := searchPhotosByText(queryText, 1)
 
 			answerMessageFullMode(bot, update.Message.Chat.ID, photos)
 		} else {
 			queryText := update.Message.Text
-			photos := searchPhotosByText(queryText)
+			photos := searchPhotosByText(queryText, 1)
 			answerMessage(bot, update.Message.Chat.ID, photos)
 		}
 	}

@@ -21,11 +21,12 @@ type Photo struct {
 	url             string
 }
 
-func SearchImageForKeyword(keyword string) []Photo {
+//ImageForKeyword search image for keyword
+func ImageForKeyword(keyword string, offset int) []Photo {
 	keyword = url.QueryEscape(keyword)
-	search_url := BASE_URL + "/api/shots?q=" + keyword
+	searchURL := fmt.Sprintf("%s/api/shots?q=%s&page=%d", BASE_URL, keyword, offset)
 
-	response, err := http.Get(search_url)
+	response, err := http.Get(searchURL)
 	if err != nil {
 		return nil
 	}
